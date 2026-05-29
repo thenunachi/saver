@@ -9,8 +9,14 @@ def create_app():
     app = Flask(__name__)
     app.config.from_object(Config)
 
-    CORS(app, resources={r"/api/*": {"origins": app.config["CORS_ORIGINS"]}},
-         supports_credentials=True)
+    # Support comma-separated list of origins, e.g.
+    # "https://savr-xi.vercel.app,http://localhost:5173"
+    origins = [o.strip() for o in app.config["CORS_ORIGINS"].split(",")]
+    CORS(app,
+         resources={r"/api/*": {"origins": origins}},
+         supports_credentials=True,
+         allow_headers=["Content-Type", "Authorization"],
+         methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"])
 
     db.init_app(app)
     jwt.init_app(app)
