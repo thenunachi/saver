@@ -5,10 +5,11 @@ load_dotenv()
 
 def _db_url():
     url = os.getenv("DATABASE_URL", "sqlite:///savings.db")
-    # Render (and older Heroku) gives "postgres://..." but SQLAlchemy 1.4+
-    # requires "postgresql://..."
+    # Normalise Render/Heroku "postgres://" → "postgresql+psycopg://" (psycopg v3)
     if url.startswith("postgres://"):
-        url = url.replace("postgres://", "postgresql://", 1)
+        url = url.replace("postgres://", "postgresql+psycopg://", 1)
+    elif url.startswith("postgresql://"):
+        url = url.replace("postgresql://", "postgresql+psycopg://", 1)
     return url
 
 class Config:
