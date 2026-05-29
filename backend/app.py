@@ -22,14 +22,18 @@ def create_app():
 
     with app.app_context():
         db.create_all()
-        # Safe migration: add sort_order column if it doesn't exist yet
+        # Safe migration: add sort_order column if it doesn't exist yet.
+        # Works on both SQLite and PostgreSQL.
         from sqlalchemy import text, inspect
         inspector = inspect(db.engine)
-        cols = [c["name"] for c in inspector.get_columns("goals")]
-        if "sort_order" not in cols:
-            with db.engine.connect() as conn:
-                conn.execute(text("ALTER TABLE goals ADD COLUMN sort_order INTEGER DEFAULT 0"))
-                conn.commit()
+        if "goals" in inspector.get_table_names():
+            cols = [c["name"] for c in inspector.get_columns("goals")]
+            if "sort_order" not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text(
+                        "ALTER TABLE goals ADD COLUMN sort_order INTEGER DEFAULT 0"
+                    ))
+                    conn.commit()
 
     return app
 
