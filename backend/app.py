@@ -2,7 +2,7 @@ from flask import Flask
 from flask_cors import CORS
 from config import Config
 from extensions import db, jwt
-from routes import auth_bp, goals_bp, deposits_bp, stats_bp
+from routes import auth_bp, goals_bp, deposits_bp, stats_bp, health_bp
 
 
 def create_app():
@@ -24,6 +24,7 @@ def create_app():
     app.register_blueprint(goals_bp)
     app.register_blueprint(deposits_bp)
     app.register_blueprint(stats_bp)
+    app.register_blueprint(health_bp)
 
     with app.app_context():
         db.create_all()
