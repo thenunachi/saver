@@ -29,10 +29,23 @@ def health():
     except Exception:
         bcrypt_status = traceback.format_exc()
 
+    register_status = "ok"
+    try:
+        from models import User
+        user = User(name="__healthcheck__", email="__healthcheck__@example.com")
+        user.set_password("password123")
+        db.session.add(user)
+        db.session.flush()
+        db.session.rollback()
+    except Exception:
+        register_status = traceback.format_exc()
+        db.session.rollback()
+
     return jsonify({
         "status":   "ok",
         "db_type":  db_type,
         "db_status": db_status,
         "tables": tables,
         "bcrypt_status": bcrypt_status,
+        "register_status": register_status,
     }), 200
