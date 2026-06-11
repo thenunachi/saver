@@ -27,10 +27,27 @@ def create_app():
     app.register_blueprint(health_bp)
 
     with app.app_context():
+        from sqlalchemy import text, inspect
+        inspector = inspect(db.engine)
+
+        # One-time fix: an old/incompatible "users" table from a previous
+        # deployment may exist without the columns our model expects.
+        # If so, drop the stale tables so create_all() can recreate them
+        # with the correct schema (safe: no real data has been written yet).
+        if "users" in inspector.get_table_names():
+            cols = [c["name"] for c in inspector.get_columns("users")]
+            if "name" not in cols or "password" not in cols:
+                with db.engine.connect() as conn:
+                    conn.execute(text("DROP TABLE IF EXISTS deposits CASCADE"))
+                    conn.execute(text("DROP TABLE IF EXISTS goals CASCADE"))
+                    conn.execute(text("DROP TABLE IF EXISTS users CASCADE"))
+                    conn.commit()
+                inspector = inspect(db.engine)
+
         db.create_all()
+
         # Safe migration: add sort_order column if it doesn't exist yet.
         # Works on both SQLite and PostgreSQL.
-        from sqlalchemy import text, inspect
         inspector = inspect(db.engine)
         if "goals" in inspector.get_table_names():
             cols = [c["name"] for c in inspector.get_columns("goals")]

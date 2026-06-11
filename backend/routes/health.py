@@ -1,8 +1,7 @@
 from flask import Blueprint, jsonify
 from extensions import db
-from sqlalchemy import text, inspect
+from sqlalchemy import text
 import os
-import traceback
 
 health_bp = Blueprint("health", __name__, url_prefix="/api")
 
@@ -17,35 +16,8 @@ def health():
     except Exception as e:
         db_status = f"ERROR: {str(e)}"
 
-    try:
-        tables = inspect(db.engine).get_table_names()
-    except Exception as e:
-        tables = f"ERROR: {str(e)}"
-
-    bcrypt_status = "ok"
-    try:
-        import bcrypt
-        bcrypt.checkpw(b"x", bcrypt.hashpw(b"x", bcrypt.gensalt()))
-    except Exception:
-        bcrypt_status = traceback.format_exc()
-
-    register_status = "ok"
-    try:
-        from models import User
-        user = User(name="__healthcheck__", email="__healthcheck__@example.com")
-        user.set_password("password123")
-        db.session.add(user)
-        db.session.flush()
-        db.session.rollback()
-    except Exception:
-        register_status = traceback.format_exc()
-        db.session.rollback()
-
     return jsonify({
         "status":   "ok",
         "db_type":  db_type,
         "db_status": db_status,
-        "tables": tables,
-        "bcrypt_status": bcrypt_status,
-        "register_status": register_status,
     }), 200
